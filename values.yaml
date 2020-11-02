@@ -1,0 +1,11 @@
+# Azure Vote UI controll
+title: "Azure Vote App"
+value1: Dogs
+value2: Cats
+
+# Service controlls
+serviceNameFront: azure-vote-front
+serviceType: ClusterIP
+
+# Ingress
+fqdn: helm.aks.releasr.io
