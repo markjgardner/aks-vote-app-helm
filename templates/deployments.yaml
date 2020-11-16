@@ -1,33 +1,102 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vote-back-{{.Release.Name}}
+  name: voting-storage-{{ .Release.Name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vote-back-{{.Release.Name}}
+      app: voting-storage
   template:
     metadata:
       labels:
-        app: vote-back-{{.Release.Name}}
+        app: voting-storage
     spec:
       containers:
-      - name: vote-back-{{.Release.Name}}
-        image: redis
+      - name: voting-storage
+        image: {{ .Values.registry }}/voting/storage
+        args: ["--ignore-db-dir=lost+found"]
         ports:
-        - containerPort: 6379
-          name: redis
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_DATABASE
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim-{{ .Release.Name }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vote-front-{{.Release.Name}}
+  name: voting-analytics-{{ .Release.Name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vote-front-{{.Release.Name}}
+      app: voting-analytics-{{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: voting-analytics-{{ .Release.Name }}
+    spec:
+      containers:
+      - name: voting-analytics
+        image: {{ .Values.registry }}/voting/analytics
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: MYSQL_HOST
+          value: "voting-storage-{{ .Release.Name }}"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_DATABASE
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voting-app-{{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: voting-app-{{ .Release.Name }}
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -36,27 +105,43 @@ spec:
   template:
     metadata:
       labels:
-        app: vote-front-{{.Release.Name}}
+        app: voting-app-{{ .Release.Name }}
     spec:
       containers:
-      - name: azure-vote-front
-        image: neilpeterson/azure-vote-front:v3
+      - name: azure-voting-app
+        image: {{ .Values.registry }}/voting/app
         imagePullPolicy: Always
         ports:
-        - containerPort: 80
+        - containerPort: 8080
+          name: http
         resources:
           requests:
             cpu: 250m
           limits:
             cpu: 500m
         env:
-        - name: REDIS
-          value: vote-back-{{.Release.Name}}
-        - name: TITLE
-          value: {{ .Values.title }}
-        - name: VOTE1VALUE
-          value: {{ .Values.value1 }}
-        - name: VOTE2VALUE
-          value: {{ .Values.value2 }}
+        - name: SHOWDETAILS
+          value: "true"
+        - name: FEATUREFLAG
+          value: "true"
+        - name: MYSQL_HOST
+          value: "voting-storage-{{ .Release.Name }}"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: voting-storage-secret-{{ .Release.Name }}
+              key: MYSQL_DATABASE
+        - name: ANALYTICS_HOST
+          value: "voting-analytics-{{ .Release.Name }}"
 
 # Add if operator to env vars

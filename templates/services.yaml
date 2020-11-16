@@ -1,24 +1,39 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: vote-back-{{.Release.Name}}
+  name: voting-storage-{{ .Release.Name }}
   labels:
-    name: vote-back-{{.Release.Name}}
+    name: voting-storage-{{ .Release.Name }}
 spec:
   ports:
   - port: 6379
+    name: redis
+  - port: 3306
+    name: mysql
   selector:
-    app: vote-back-{{.Release.Name}}
+    app: voting-storage-{{ .Release.Name }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.serviceNameFront }}
-  labels:
-    name: {{ .Values.serviceNameFront }}
+  name: voting-analytics-{{ .Release.Name }}
+  labels: 
+    app: voting-analytics-{{ .Release.Name }}
 spec:
-  type: {{ .Values.serviceType }}
   ports:
-  - port: 80
+  - port: 8080
+    name: http
   selector:
-    app: vote-front-{{.Release.Name}}
+    app: voting-analytics-{{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceNameApp }}
+spec:
+  selector:
+    app: voting-app-{{ .Release.Name }}
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
