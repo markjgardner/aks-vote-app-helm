@@ -1,5 +1,5 @@
 # Container registry, no trailing slash
-registry: ghcr.io/markjgardner
+registry: "ghcr.io/markjgardner"
 
 # Azure Vote UI controll
 title: "Azure Vote App"
@@ -13,7 +13,7 @@ serviceNameApp: azure-voting-app
 fqdn: helm.aks.releasr.io
 
 # MySQL
-  mysql_user: 5e39f77d
-  mysql_password: NDUwNzM1YjgtMGRiYy00YWNhLTk3MmEtYzk0YmYwYTQ2NDFl
-  mysql_database: 9f6d3d8c
-  mysql_root_password: NDkyNjIwYWEtMzdhOS00NGVjLTkzOTAtNTVlZWM5ODdmZDky
+mysql_user: ZGJ1c2Vy
+mysql_password: UGFzc3dvcmQxMg==
+mysql_database: YXp1cmV2b3Rl
+mysql_root_password: UGFzc3dvcmQxMg==

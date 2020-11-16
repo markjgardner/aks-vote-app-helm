@@ -6,11 +6,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: voting-storage
+      app: voting-storage-{{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: voting-storage
+        app: voting-storage-{{ .Release.Name }}
     spec:
       containers:
       - name: voting-storage
